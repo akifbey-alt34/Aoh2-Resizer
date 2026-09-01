@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Age of History - Image Resizer Studio</title>
+    
+    <!-- PWA / Mobil Meta Etiketleri -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AoH Resizer">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0b0f19 0%, #111827 50%, #1e1b4b 100%);
+            --card-bg: rgba(30, 41, 59, 0.85);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --accent-color: #6366f1;
+            --accent-hover: #4f46e5;
+            --accent-glow: rgba(99, 102, 241, 0.35);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 16px;
+        }
+
+        .app-container {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--card-border);
+            width: 100%;
+            max-width: 680px;
+            padding: 24px;
+        }
+
+        @media (min-width: 640px) {
+            .app-container {
+                padding: 32px;
+            }
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--accent-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .header h1 {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        @media (min-width: 480px) {
+            .header h1 {
+                font-size: 1.25rem;
+            }
+        }
+
+        .lang-select {
+            background: rgba(15, 23, 42, 0.6);
+            color: var(--text-main);
+            border: 1px solid var(--card-border);
+            padding: 8px 12px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            outline: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .drop-zone {
+            border: 2px dashed rgba(99, 102, 241, 0.4);
+            border-radius: var(--radius-md);
+            padding: 28px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            background: rgba(99, 102, 241, 0.03);
+            margin-bottom: 20px;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .drop-zone svg {
+            width: 40px;
+            height: 40px;
+            fill: var(--accent-color);
+            margin-bottom: 8px;
+        }
+
+        .drop-zone p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .drop-zone span {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .drop-zone input {
+            display: none;
+        }
+
+        .preview-card {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .preview-img-wrapper {
+            width: 70px;
+            height: 70px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--card-border);
+            flex-shrink: 0;
+        }
+
+        .preview-img-wrapper img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .preview-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .preview-info h4 {
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .preview-info p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .presets-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .presets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .preset-card {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-md);
+            padding: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .preset-card:hover {
+            border-color: rgba(99, 102, 241, 0.5);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .preset-card.active {
+            border-color: var(--accent-color);
+            background: rgba(99, 102, 241, 0.15);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .preset-card .name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .preset-card .size {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px var(--accent-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: var(--accent-hover);
+        }
+
+        .btn:disabled {
+            background: rgba(51, 65, 85, 0.5);
+            color: #64748b;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <div class="brand">
+            <div class="brand-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4H1v-2h22v2h-2zM12 2l5 5h-3v6h-4V7H7l5-5z"/></svg>
+            </div>
+            <h1 id="title">AoH Resim Boyutlandırıcı</h1>
+        </div>
+        <select id="langSelect" class="lang-select" onchange="changeLanguage()">
+            <option value="tr">Türkçe</option>
+            <option value="en">English</option>
+        </select>
+    </div>
+
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+        <p id="dropText">Resmi buraya sürükleyin veya <span>seçmek için tıklayın</span></p>
+        <input type="file" id="fileInput" accept="image/*" onchange="if(this.files.length) handleFile(this.files[0])">
+    </div>
+
+    <div class="preview-card" id="previewCard">
+        <div class="preview-img-wrapper">
+            <img id="imagePreview" alt="Önizleme">
+        </div>
+        <div class="preview-info">
+            <h4 id="fileName">-</h4>
+            <p id="fileDetails">-</p>
+        </div>
+    </div>
+
+    <div class="presets-title" id="presetLabel">Hedef Ölçü Seçin:</div>
+    <div class="presets-grid">
+        <div class="preset-card active" data-value="88x100" onclick="selectPreset(this)">
+            <span class="name" id="opt-leader">Liderler</span>
+            <span class="size">88 x 100</span>
+        </div>
+        <div class="preset-card" data-value="27x18" onclick="selectPreset(this)">
+            <span class="name" id="opt-flag1">Bayrak (S)</span>
+            <span class="size">27 x 18</span>
+        </div>
+        <div class="preset-card" data-value="66x44" onclick="selectPreset(this)">
+            <span class="name" id="opt-flag2">Bayrak (M)</span>
+            <span class="size">66 x 44</span>
+        </div>
+        <div class="preset-card" data-value="154x100" onclick="selectPreset(this)">
+            <span class="name" id="opt-flag3">Bayrak (L)</span>
+            <span class="size">154 x 100</span>
+        </div>
+        <div class="preset-card" data-value="1920x1080" onclick="selectPreset(this)">
+            <span class="name" id="opt-loading">Yükleme Ekr.</span>
+            <span class="size">1920 x 1080</span>
+        </div>
+    </div>
+
+    <button class="btn" id="downloadBtn" onclick="resizeAndDownload()" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        <span id="btnText">Yeniden Boyutlandır ve İndir</span>
+    </button>
+</div>
+
+<script>
+    let selectedFile = null;
+    let selectedSize = "88x100";
+    let loadedImageObject = null;
+
+    const i18n = {
+        tr: {
+            title: "AoH Resim Boyutlandırıcı",
+            dropText: "Resmi buraya sürükleyin veya <span>seçmek için tıklayın</span>",
+            presetLabel: "Hedef Ölçü Seçin:",
+            optLeader: "Liderler",
+            optFlag1: "Bayrak (S)",
+            optFlag2: "Bayrak (M)",
+            optFlag3: "Bayrak (L)",
+            optLoading: "Yükleme Ekr.",
+            downloadBtn: "Yeniden Boyutlandır ve İndir"
+        },
+        en: {
+            title: "AoH Image Resizer",
+            dropText: "Drag & drop image here or <span>click to browse</span>",
+            presetLabel: "Select Target Size:",
+            optLeader: "Leaders",
+            optFlag1: "Flag (S)",
+            optFlag2: "Flag (M)",
+            optFlag3: "Flag (L)",
+            optLoading: "Loading Scrn",
+            downloadBtn: "Resize & Download"
+        }
+    };
+
+    function changeLanguage() {
+        const lang = document.getElementById('langSelect').value;
+        const t = i18n[lang];
+
+        document.getElementById('title').innerText = t.title;
+        document.getElementById('dropText').innerHTML = t.dropText;
+        document.getElementById('presetLabel').innerText = t.presetLabel;
+        document.getElementById('opt-leader').innerText = t.optLeader;
+        document.getElementById('opt-flag1').innerText = t.optFlag1;
+        document.getElementById('opt-flag2').innerText = t.optFlag2;
+        document.getElementById('opt-flag3').innerText = t.optFlag3;
+        document.getElementById('opt-loading').innerText = t.optLoading;
+        document.getElementById('btnText').innerText = t.downloadBtn;
+    }
+
+    function selectPreset(element) {
+        document.querySelectorAll('.preset-card').forEach(card => card.classList.remove('active'));
+        element.classList.add('active');
+        selectedSize = element.getAttribute('data-value');
+    }
+
+    const dropZone = document.getElementById('dropZone');
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        const files = e.dataTransfer.files;
+        if (files.length > 0) handleFile(files[0]);
+    });
+
+    function handleFile(file) {
+        if (!file || !file.type.startsWith('image/')) return;
+        selectedFile = file;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                loadedImageObject = img;
+                document.getElementById('imagePreview').src = e.target.result;
+                document.getElementById('fileName').innerText = file.name;
+                document.getElementById('fileDetails').innerText = `${img.width}x${img.height} px • ${(file.size / 1024).toFixed(1)} KB`;
+                document.getElementById('previewCard').style.display = 'flex';
+                document.getElementById('downloadBtn').disabled = false;
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function resizeAndDownload() {
+        if (!selectedFile || !loadedImageObject) return;
+
+        const [targetWidth, targetHeight] = selectedSize.split('x').map(Number);
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext('2d');
+
+        // Görseli merkezden düzgün kırparak (Center-Crop) çizdirme
+        const imgAspect = loadedImageObject.width / loadedImageObject.height;
+        const targetAspect = targetWidth / targetHeight;
+
+        let renderWidth, renderHeight, offsetX, offsetY;
+
+        if (imgAspect > targetAspect) {
+            renderHeight = loadedImageObject.height;
+            renderWidth = loadedImageObject.height * targetAspect;
+            offsetX = (loadedImageObject.width - renderWidth) / 2;
+            offsetY = 0;
+        } else {
+            renderWidth = loadedImageObject.width;
+            renderHeight = loadedImageObject.width / targetAspect;
+            offsetX = 0;
+            offsetY = (loadedImageObject.height - renderHeight) / 2;
+        }
+
+        ctx.drawImage(
+            loadedImageObject,
+            offsetX, offsetY, renderWidth, renderHeight,
+            0, 0, targetWidth, targetHeight
+        );
+
+        const fileName = `aoh_${selectedSize}_${selectedFile.name.split('.')[0]}.png`;
+
+        // Mobil / PWA Uyumlu İndirme Yöntemi
+        canvas.toBlob((blob) => {
+            if (!blob) return;
+            
+            // Web Share API desteği varsa (Mobil cihazlarda doğrudan galeriye / dosyalara kaydetme ekranı açar)
+            if (navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'image/png' })] })) {
+                const file = new File([blob], fileName, { type: 'image/png' });
+                navigator.share({
+                    files: [file],
+                    title: 'Boyutlandırılan Resim',
+                }).catch(() => {
+                    fallbackDownload(blob, fileName);
+                });
+            } else {
+                fallbackDownload(blob, fileName);
+            }
+        }, 'image/png');
+    }
+
+    function fallbackDownload(blob, fileName) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    // PWA Service Worker Kaydı
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('PWA Service Worker Kayıtlı:', reg.scope))
+                .catch(err => console.log('Service Worker Hatası:', err));
+        });
+    }
+</script>
+
+</body>
+</html>
